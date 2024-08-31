@@ -16,7 +16,7 @@ func main() {
 
 	r := gin.Default()
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"https://inventorify-iyct.vercel.app", "localhost:3000"}
+	config.AllowOrigins = []string{"https://inventorify-iyct.vercel.app", "http://localhost:3000"}
 	config.AllowMethods = []string{"POST", "GET", "PUT", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Authorization", "Accept", "User-Agent", "Cache-Control", "Pragma"}
 	config.ExposeHeaders = []string{"Content-Length"}
