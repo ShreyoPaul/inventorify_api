@@ -32,6 +32,10 @@ type Result struct {
 	Products []Product
 }
 
+type PidRequest struct {
+	Pid string `json:"pid"`
+}
+
 func GetAllProducts(c *gin.Context) {
 	inventoryId := c.Param("inventory")
 	id, err := primitive.ObjectIDFromHex(inventoryId)
@@ -328,4 +332,76 @@ func BillingProduct(c *gin.Context) {
 		fmt.Print(result)
 		c.JSON(200, gin.H{"user": existingUser.Name, "email": existingUser.Email, "result": result})
 	}
+}
+
+func DeleteProduct(c *gin.Context) {
+	inventoryId := c.Param("inventory")
+	id, err := primitive.ObjectIDFromHex(inventoryId)
+	if err != nil {
+		c.JSON(401, gin.H{"error": "Inventory Hex Error"})
+		return
+	}
+
+	token := c.GetHeader("authorization")
+	claims, err := utils.ParseToken(token)
+	if err != nil {
+		c.JSON(401, gin.H{"error": "unauthorized! Parsing failed!" + err.Error()})
+		return
+	}
+	// fmt.Printf("Token claims added: %+v\n", claims.Email)
+
+	filter := bson.M{"email": claims.Email}
+	var existingUser model.Users
+	model.Collection.FindOne(context.Background(), filter).Decode(&existingUser)
+	// fmt.Println("test", existingUser.Inv)
+	if existingUser.Name == "" || existingUser.Email == "" {
+		c.JSON(400, gin.H{"error": "user does not exist"})
+		return
+	}
+
+	var invs []model.Inv = existingUser.Inv
+	// fmt.Print(invs)
+	var pid PidRequest
+	if err := c.ShouldBindJSON(&pid); err != nil {
+		fmt.Print("ERROR in Pid\n")
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	// fmt.Print(pid)
+
+	p, err := primitive.ObjectIDFromHex(pid.Pid)
+	if err != nil {
+		c.JSON(401, gin.H{"error": "Product Hex Error"})
+		return
+	}
+	// fmt.Print(p)
+	var newInv []model.Product
+	for _, _inv := range invs {
+		if _inv.ID == id {
+			for _, product := range _inv.Products {
+				if product.ID != p {
+					newInv = append(newInv, product)
+				}
+			}
+			fmt.Print("newInv:\n", newInv)
+
+			_inv.Products = newInv
+			fmt.Print("_inv.Products:\n", _inv.Products)
+			break
+		}
+	}
+	filterbyId := bson.M{"inv.id": id}
+	update := bson.M{
+		"$set": bson.M{
+			"inv.$.products": newInv,
+		},
+	}
+	result, err := model.Collection.UpdateOne(context.Background(), filterbyId, update)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Inventory creation failed!" + err.Error()})
+		return
+	}
+
+	fmt.Print(result)
+	c.JSON(200, gin.H{"user": existingUser.Name, "email": existingUser.Email, "result": result})
 }

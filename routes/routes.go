@@ -23,6 +23,7 @@ func Product(r *gin.Engine) {
 	r.GET("/pipeline", controllers.PipelineAllProducts)
 	r.POST("/:inventory", controllers.CreateProduct)
 	r.PATCH("/", controllers.UpdateProduct)
+	r.DELETE("/:inventory", controllers.DeleteProduct)
 	r.PATCH("/bill", controllers.BillingProduct)
 }
 
