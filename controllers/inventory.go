@@ -119,3 +119,50 @@ func AddAttributes(c *gin.Context) {
 
 	c.JSON(200, gin.H{"result": result})
 }
+
+func DeleteInvenroty(c *gin.Context) {
+	inventoryId := c.Param("inventory")
+	id, err := primitive.ObjectIDFromHex(inventoryId)
+	if err != nil {
+		c.JSON(401, gin.H{"error": "Inventory Hex Error"})
+		return
+	}
+
+	token := c.GetHeader("authorization")
+	claims, err := utils.ParseToken(token)
+	if err != nil {
+		c.JSON(401, gin.H{"error": "unauthorized! Parsing failed!" + err.Error()})
+		return
+	}
+
+	filter := bson.M{"email": claims.Email}
+	var existingUser model.Users
+	model.Collection.FindOne(context.Background(), filter).Decode(&existingUser)
+	if existingUser.Name == "" || existingUser.Email == "" {
+		c.JSON(400, gin.H{"error": "user does not exist"})
+		return
+	}
+
+	var invs []model.Inv = existingUser.Inv
+
+	var newInv []model.Inv
+	for _, _inv := range invs {
+		if _inv.ID != id {
+			newInv = append(newInv, _inv)
+		}
+	}
+	filterbyId := bson.M{"inv.id": id}
+	update := bson.M{
+		"$set": bson.M{
+			"inv": newInv,
+		},
+	}
+	result, err := model.Collection.UpdateOne(context.Background(), filterbyId, update)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Inventory deletion failed!" + err.Error()})
+		return
+	}
+
+	fmt.Print(result)
+	c.JSON(200, gin.H{"user": existingUser.Name, "email": existingUser.Email, "result": result})
+}

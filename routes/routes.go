@@ -16,6 +16,7 @@ func Inventory(r *gin.Engine) {
 	r.OPTIONS("/", controllers.GetAllInv)
 	r.POST("/", controllers.CreateInv)
 	r.POST("/add-attributes-2-inventory", controllers.AddAttributes)
+	r.DELETE("/inv/:inventory", controllers.DeleteInvenroty)
 }
 
 func Product(r *gin.Engine) {
