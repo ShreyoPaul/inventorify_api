@@ -398,7 +398,7 @@ func DeleteProduct(c *gin.Context) {
 	}
 	result, err := model.Collection.UpdateOne(context.Background(), filterbyId, update)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Inventory creation failed!" + err.Error()})
+		c.JSON(400, gin.H{"error": "Product deletion failed!" + err.Error()})
 		return
 	}
 
