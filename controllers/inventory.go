@@ -151,12 +151,22 @@ func DeleteInvenroty(c *gin.Context) {
 			newInv = append(newInv, _inv)
 		}
 	}
-	filterbyId := bson.M{"inv.id": id}
-	update := bson.M{
-		"$set": bson.M{
-			"inv": newInv,
-		},
+	var update primitive.M
+	if len(newInv) > 0 {
+		update = bson.M{
+			"$set": bson.M{
+				"inv": newInv,
+			},
+		}
+	} else {
+		update = bson.M{
+			"$set": bson.M{
+				"inv": []interface{}{},
+			},
+		}
 	}
+	filterbyId := bson.M{"inv.id": id}
+
 	result, err := model.Collection.UpdateOne(context.Background(), filterbyId, update)
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Inventory deletion failed!" + err.Error()})
